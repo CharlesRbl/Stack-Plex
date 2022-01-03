@@ -1,0 +1,71 @@
+# Docker-compose Protonvpn + Transmission + Nginx + Joal (Ratio Master optionnel)
+# voir les docker hub associé pour plus d'informations
+
+---
+version: '2.2'
+services:
+  protonvpn:
+    image: dperson/openvpn-client:latest
+    container_name: protonvpn
+    cap_add:
+    - NET_ADMIN
+    devices:
+    - /dev/net/tun
+    environment:
+      - PIUD=1001
+      - PGID=1001
+    volumes:
+    - /home/packer/docker/protonvpn/vpn:/vpn
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: unless-stopped
+
+  transmission:
+    image: linuxserver/transmission
+    container_name: transmission
+    network_mode: "service:protonvpn"
+    depends_on:
+      - protonvpn
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=022
+      - TZ=Europe/Paris
+    volumes:
+      - /home/packer/docker/transmission:/config
+      - /data/downloads:/downloads
+    restart: unless-stopped
+
+  joal:
+    image: anthonyraymond/joal
+    container_name: joal
+    network_mode: "service:protonvpn"
+    depends_on:
+      - protonvpn
+    restart: unless-stopped
+    volumes:
+      - ./joal:/data
+    command: ["--joal-conf=/data", "--spring.main.web-environment=true", "--server.port=9092", "--joal.ui.path.prefix=aabbccFIPA", "--joal.ui.secret-token=coucou"]
+
+  
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    environment:
+      - PIUD=1001
+      - PGID=1001
+      - TZ=Europe/Paris
+    ports:
+      - 9091:9091
+      - 9092:9092
+    links:
+      - protonvpn # permet de mettre dans le nginx http://protonvpn:9091, ça link les 2 conteneurs et on peut utiliser le nom défini (les 2 noms fonctionnent jsp pourquoi)
+    volumes: 
+      - /home/packer/docker/nginx/conf.d:/etc/nginx/conf.d 
+      - /home/packer/docker/nginx:/etc/nginx
+    restart: unless-stopped

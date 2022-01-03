@@ -1,0 +1,60 @@
+# Docker-compose.yml pour le monitoring du serveur plex (à compléter)
+
+---
+version: "2.1"
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    environment:
+      - PIUD=1001
+      - PGID=1001
+      - TZ=Europe/Paris
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml' 
+    volumes:
+      - /home/packer/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+
+  node-exporter:
+    container_name: node-exporter
+    image: prom/node-exporter
+    environment:
+      - PIUD=1001
+      - PGID=1001
+      - TZ=Europe/Paris
+    ports: 
+     - 9100:9100
+    restart: unless-stopped
+  
+  cadvisor:
+    container_name: cadvisor
+    image: google/cadvisor:latest
+    environment:
+      - PIUD=1001
+      - PGID=1001
+      - TZ=Europe/Paris    
+    ports: 
+      - 8080:8080
+    volumes: 
+      - /:/rootfs:ro
+      - /var/run://var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+  
+  grafana:
+    container_name: grafana
+    user: '472'
+    image: grafana/grafana:latest
+    environment:
+      - TZ=Europe/Paris
+    ports:
+      - 3000:3000
+    volumes:
+      - /home/packer/docker/prometheus/grafana:/var/lib/grafana:rw
+    depends_on:
+      - prometheus
+    restart: unless-stopped

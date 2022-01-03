@@ -1,0 +1,20 @@
+# Docker-compose Plex
+# Voir le docker Hub de Plex pour récupérer l'URl pour choisir son propre Token Plex
+---
+version: '2.1'
+services:
+  plex:
+    image: linuxserver/plex
+    container_name: plex
+    ports:
+      - 32400:32400
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Europe/Paris
+      - PLEX_CLAIM=Token_plex
+    volumes:
+      - /data:/data
+      - /home/packer/docker/plex:/config
+      - /dev/shm:/transcode
+    restart: unless-stopped

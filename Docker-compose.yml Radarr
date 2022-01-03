@@ -1,0 +1,19 @@
+# Docker-compose de Radarr
+# Plus d'information sur le docker hub de Radarr
+
+version: '2.2'
+services:
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - UMASK=022
+      - TZ=Europe/Paris
+    volumes:
+      - /home/packer/docker/radarr/config:/config
+      - /data:/data
+    ports:
+      - 7878:7878
+    restart: unless-stopped
